@@ -109,7 +109,6 @@
         background: #000;
         min-height: 140px;
         border: 1px solid rgba(255, 255, 255, 0.04);
-        cursor: pointer;
       }
       .participant video {
         width: 100%;
@@ -126,20 +125,6 @@
         padding: 6px 8px;
         border-radius: 8px;
         font-weight: 700;
-      }
-      .participant.fullscreen {
-        position: fixed !important;
-        top: 0;
-        left: 0;
-        width: 100vw !important;
-        height: 100vh !important;
-        z-index: 9999;
-        border-radius: 0;
-      }
-      .participant.fullscreen video {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: contain !important;
       }
       .controls-row {
         display: flex;
@@ -222,11 +207,22 @@
           </div>
           <div style="margin-top: 10px" class="controls-row">
             <label style="font-size: 0.9rem; color: var(--muted)">Room:</label>
-            <input id="roomInput" type="text" value="demo-room" />
+            <input
+              id="roomInput"
+              type="text"
+              value="demo-room"
+              style="
+                padding: 6px;
+                border-radius: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                background: transparent;
+                color: var(--text);
+              "
+            />
           </div>
           <div style="margin-top: 8px; color: var(--muted); font-size: 0.85rem">
-            Buka index.html di beberapa tab/perangkat, pastikan URL signaling
-            (ws/wss) benar.
+            Buka client.html di beberapa tab/perangkat, pastikan URL signaling
+            (ws) benar.
           </div>
         </div>
 
@@ -249,7 +245,11 @@
     </div>
 
     <script>
-      const SIGNALING_SERVER_URL = "https://d51f9139cbe5.ngrok-free.app";
+      /*
+  Client for mesh multi-user WebRTC using WebSocket signaling
+  Make sure to set SIGNALING_SERVER_URL to your server (ws://localhost:3000)
+*/
+      const SIGNALING_SERVER_URL = " https://d51f9139cbe5.ngrok-free.app"; // ganti jika perlu
       const STUN_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 
       const localState = document.getElementById("localState");
@@ -269,11 +269,15 @@
 
       let localStream = null;
       let localVideoTrack = null;
-      let pcMap = {};
-      let dataChannels = {};
+      let pcMap = {}; // peerId -> RTCPeerConnection
+      let dataChannels = {}; // peerId -> dataChannel
       let peers = new Set();
       let ws;
       const myId = Math.random().toString(36).substr(2, 9);
+
+      function log(...a) {
+        console.log("[client]", ...a);
+      }
 
       function addMessage(text, who = "me") {
         const d = document.createElement("div");
@@ -299,17 +303,6 @@
         lbl.textContent = label || id;
         wrap.appendChild(lbl);
         videoGrid.appendChild(wrap);
-        wrap.addEventListener("click", () => {
-          if (wrap.classList.contains("fullscreen")) {
-            wrap.classList.remove("fullscreen");
-          } else {
-            document
-              .querySelectorAll(".participant.fullscreen")
-              .forEach((el) => el.classList.remove("fullscreen"));
-            wrap.classList.add("fullscreen");
-          }
-        });
-
         return v;
       }
 
